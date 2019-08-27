@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PowerSettings>
+  <PrimaryBattery>
+    <Level level="100" minCount="852" />
+    <Level level="75" minCount="821"></Level>
+    <Level level="50" minCount="813"></Level>
+    <Level level="25" minCount="783"></Level>
+    <Level level="10" minCount="725"></Level>
+    <Level level="5" minCount="680"></Level>
+    <Level level="0" minCount="640"></Level>
+  </PrimaryBattery>
+  <LowPowerWarningLevel level="10"></LowPowerWarningLevel>
+  <LowPowerShutdownLevel level="3"></LowPowerShutdownLevel>
+  <TemperatureSettings>
+    <Core>
+      <Temperature temperature="85" actionToPerform="FlashTempWarning" />
+    </Core>
+    <GasGauge>
+      <Temperature temperature="60" actionToPerform="DropCameraAndRun" />
+    </GasGauge>
+  </TemperatureSettings>
+  <RechargeableBattery>
+    <TTEValue time_warn="10" actionToPerform="WarnUser" />
+    <TTEValue time_warn="5" actionToPerform="Shutdown" />
+  </RechargeableBattery>
+</PowerSettings>

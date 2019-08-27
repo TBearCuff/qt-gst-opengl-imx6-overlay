@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Settings>
+    <currentPalette>0</currentPalette>
+    <currentZoom>0</currentZoom>
+    <enabledWifi>1</enabledWifi>
+    <enabledBT>1</enabledBT>
+    <enabledGPS>1</enabledGPS>
+    <enabledNFC>1</enabledNFC>
+    <enabledAPO>1</enabledAPO>
+    <currentBacklight>45</currentBacklight>
+    <currentContrast>0.97</currentContrast>
+    <currentSharpness>0.95</currentSharpness>
+    <currentHomeMode>0</currentHomeMode>
+    <videoSaveLocation>/run/media/mmcblk2p3/DCIM/</videoSaveLocation>
+    <imageSaveLocation>/run/media/mmcblk2p3/DCIM/</imageSaveLocation>
+    <SdPresent>1</SdPresent>
+    <currentAPOTime>3</currentAPOTime>
+    <currentHourFormat>0</currentHourFormat>
+    <currentDistanceFormat>0</currentDistanceFormat>
+    <currentTemperatureFormat>0</currentTemperatureFormat>
+    <enableMovementWake>0</enableMovementWake>
+    <enableNFCWake>0</enableNFCWake>
+    <enableMetaDataTime>0</enableMetaDataTime>
+    <enableMetaDataGPS>0</enableMetaDataGPS>
+    <enableAudio>0</enableAudio>
+    <enableMetaDataTemp>0</enableMetaDataTemp>
+    <enableMetaDataCore>0</enableMetaDataCore>
+    <enableLed>1</enableLed>
+    <wifiNetworkName>none</wifiNetworkName>
+    <wifiNetworkWPS>false</wifiNetworkWPS>
+    <wifiNetworkCode>0</wifiNetworkCode>
+    <wifiNetworkConnected>0</wifiNetworkConnected>
+    <tetherSSID>PTM166-LI</tetherSSID>
+    <tetherPassphrase>LYNX-CNX-TW</tetherPassphrase>
+    <burstModeEnabled>0</burstModeEnabled>
+    <burstModeDuration>2</burstModeDuration>
+    <lpmEnabled>1</lpmEnabled>
+    <lpmTimeout>1</lpmTimeout>
+    <VideoBitRate>4096</VideoBitRate>
+</Settings>

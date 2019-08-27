@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<VideoPipeline>
+<Pipeline name="capture" default="play_first"> <!-- PipelineBlocks must be listed in order of connection -->
+    <PipelineBlock>imxv4l2videosrc device=/dev/video0 queue-size=9 skip-set-size=2 skip-pattern=2 </PipelineBlock>
+    <PipelineBlock>imxipuvideotransform output-rotation=2</PipelineBlock>
+    <PipelineBlock>video/x-raw, width=(int)640, height=(int)480, interlace-mode=(string)progressive, framerate=(fraction)30/1, pixel-aspect-ratio=(fraction)1/1, format=(string)RGBx</PipelineBlock>
+
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock sink="ivideoclean">interpipesink sync=false async=false qos=false enable-last-sample=false drop=true max-buffers=1 name=ivideoclean</PipelineBlock>
+</Pipeline>
+
+<Pipeline name="start-up" default="play_first">
+    <PipelineBlock src="ibypass">interpipesrc enable-sync=false format=time max-bytes=1 is-live=true name=ibypass listen-to=ivideoclean</PipelineBlock>
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock>imxg2dvideotransform</PipelineBlock>
+    <PipelineBlock>video/x-raw, format=(string)RGBA, width=(int)1280, height=(int)960, interlace-mode=(string)progressive, pixel-aspect-ratio=(fraction)1/1, colorimetry=(string)sRGB, framerate=(fraction)30/1</PipelineBlock>
+
+    <PipelineBlock>imxipuvideosink qos=false sync=false async=false enable-last-sample=false</PipelineBlock>
+</Pipeline>
+
+<Pipeline name="display" default="play">
+    <PipelineBlock src="idisplayvideosrc">interpipesrc enable-sync=false format=time max-bytes=1 is-live=true name=idisplayvideosrc listen-to=ivideoclean</PipelineBlock>
+
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock>imxg2dvideotransform</PipelineBlock>
+    <PipelineBlock>video/x-raw, format=(string)RGBA, width=(int)1280, height=(int)960, interlace-mode=(string)progressive, pixel-aspect-ratio=(fraction)1/1, colorimetry=(string)sRGB, framerate=(fraction)30/1</PipelineBlock>
+
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock>qtoverlay qml=/home/root/qml_gui/main.qml name=qtimx6overlay0</PipelineBlock>
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock sink="idisplay">interpipesink sync=false async=false qos=false enable-last-sample=false drop=true max-buffers=1 name=idisplay </PipelineBlock>
+
+</Pipeline>
+
+<Pipeline name="screen" default="stop">
+    <PipelineBlock src="iscreen">interpipesrc enable-sync=false format=time max-bytes=1 is-live=true name=iscreen listen-to=idisplay</PipelineBlock>
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock>imxipuvideosink qos=false sync=false async=false enable-last-sample=false</PipelineBlock>
+</Pipeline>
+
+<Pipeline name="pip" default="play">
+    <PipelineBlock src="ipipvideosrc">interpipesrc enable-sync=true format=time max-bytes=1 is-live=true name=ipipvideosrc listen-to=null</PipelineBlock>
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock>tee name=iVideoCaptureTee iVideoCaptureTee.</PipelineBlock>
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock>c.sink_0 iVideoCaptureTee.</PipelineBlock>
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock>videocrop left=288 right=288 top=216 bottom=216</PipelineBlock>
+    <PipelineBlock>c.sink_1 imxg2dcompositor name=c background-color=0x223344 sink_0::xpos=0 sink_0::ypos=0 sink_0::width=640 sink_0::height=480 sink_1::xpos=240 sink_1::ypos=0 sink_1::width=160 sink_1::height=120</PipelineBlock>
+
+    <PipelineBlock>video/x-raw, format=(string)RGBx, width=(int)640, height=(int)480, interlace-mode=(string)progressive, pixel-aspect-ratio=(fraction)1/1, colorimetry=(string)sRGB, framerate=(fraction)30/1</PipelineBlock>
+
+    <PipelineBlock>queue</PipelineBlock>
+    <PipelineBlock sink="ivideomixed">interpipesink sync=false async=false qos=false enable-last-sample=false drop=true max-buffers=1 name=ivideomixed </PipelineBlock>
+</Pipeline>
+
+
+<Pipeline name="encode" default="play">
+    <PipelineBlock src="irawvideosrc">interpipesrc enable-sync=true format=time max-bytes=1 is-live=true name=irawvideosrc listen-to=ivideoclean</PipelineBlock>
+    <PipelineBlock>imxipuvideotransform</PipelineBlock>
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock>imxvpuenc_h264 bitrate=2048 idr-interval=60 gop-size=1 name=vpuencode</PipelineBlock>
+    <PipelineBlock>video/x-h264, mapping=/SCION</PipelineBlock>
+    <PipelineBlock sink="ivideoencode">interpipesink sync=false async=false qos=false enable-last-sample=false drop=true max-buffers=1 name=ivideoencode</PipelineBlock>
+</Pipeline>
+
+<Pipeline name="audiodefcapture" default="play">
+    <PipelineBlock>audiotestsrc wave=4 is-live=true</PipelineBlock>
+    <PipelineBlock>audio/x-raw, rate=(int)44100, channels=(int)2, format=(string)S16LE, layout=(string)interleaved, channel-mask=(bitmask)0x0000000000000003</PipelineBlock>
+    <PipelineBlock>imxmp3audioenc high-quality-mode=false bitrate=32</PipelineBlock>
+    <PipelineBlock sink="iaudiosrcdefault">interpipesink sync=false async=false qos=false enable-last-sample=false drop=true max-buffers=1 name=iaudiosrcdefault</PipelineBlock>
+</Pipeline>
+
+<Pipeline name="audiocapture" default="external">
+    <PipelineBlock location="audiosrc">pulsesrc name=audiosrc provide-clock=false</PipelineBlock>
+    <PipelineBlock>audio/x-raw, rate=(int)44100, channels=(int)2, format=(string)S16LE, layout=(string)interleaved, channel-mask=(bitmask)0x0000000000000003</PipelineBlock>
+    <PipelineBlock>imxmp3audioenc high-quality-mode=false bitrate=32</PipelineBlock>
+    <PipelineBlock sink="iaudiosrc2">interpipesink sync=false async=false qos=false enable-last-sample=false drop=true max-buffers=1 name=iaudiosrc2</PipelineBlock>
+</Pipeline>
+
+<Pipeline name="record" default="stop">
+    <PipelineBlock src="ivideorecordsrc">interpipesrc enable-sync=false format=time max-bytes=1 is-live=true name=ivideorecordsrc listen-to=ivideoencode</PipelineBlock>
+    <PipelineBlock>queue</PipelineBlock>
+    <PipelineBlock>h264parse</PipelineBlock>
+    <PipelineBlock>mpegtsmux name=mux</PipelineBlock>
+    <PipelineBlock>queue</PipelineBlock>
+    <PipelineBlock src="iaudiorecordsrc" location="iVideoLocation" name="recordFile">filesink location=/tmp/test.ts name=recordFile enable-last-sample=false sync=false async=false interpipesrc format=time is-live=true enable-sync=true name=iaudiorecordsrc listen-to=iaudiosrcdefault</PipelineBlock>
+
+    <PipelineBlock>mpegaudioparse</PipelineBlock>
+    <PipelineBlock>queue</PipelineBlock>
+    <PipelineBlock>mux.</PipelineBlock>
+</Pipeline>
+
+<Pipeline name="stream" default="play">
+    <PipelineBlock src="ivideostreamsrc">interpipesrc enable-sync=false format=time max-bytes=1 is-live=true name=ivideostreamsrc listen-to=ivideoencode do-timestamp=true</PipelineBlock>
+
+    <PipelineBlock>rtspsink service=5004 sync=false max-lateness=-1 async=false appsink0::sync=false</PipelineBlock>
+</Pipeline>
+
+<Pipeline name="uvc640x480" default="external">
+    <PipelineBlock src="iuvc640x480src">interpipesrc enable-sync=false format=time max-bytes=1 is-live=true name=iuvc640x480src listen-to=ivideoclean</PipelineBlock>
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock>imxipuvideotransform</PipelineBlock>
+    <PipelineBlock>video/x-raw, width=(int)640, height=(int)480, framerate=(fraction)30/1, pixel-aspect-ratio=(fraction)1/1, format=(string)Y42B, interlace-mode=(string)progressive</PipelineBlock>
+    <PipelineBlock>queue leaky=2 max-size-buffers=3</PipelineBlock>
+    <PipelineBlock>imxvpuenc_mjpeg</PipelineBlock>
+    <PipelineBlock>uvcsink device=/dev/video2 sync=false enable-last-sample=false</PipelineBlock>
+</Pipeline>
+
+<Pipeline name="videosnapshot640x480" default="stop">
+    <PipelineBlock src="ivideosnapshot640x480src">interpipesrc enable-sync=false format=time max-bytes=1 is-live=true name=ivideosnapshot640x480src num-buffers=1 listen-to=ivideoclean</PipelineBlock>
+
+    <PipelineBlock>queue</PipelineBlock>
+    <PipelineBlock>imxipuvideotransform</PipelineBlock>
+    <PipelineBlock>imxvpuenc_mjpeg</PipelineBlock>
+    <PipelineBlock>jpegparse</PipelineBlock>
+    <PipelineBlock tag="videoTag" name="videosnapshot640x480tags">taginject name=videosnapshot640x480tags</PipelineBlock>
+    <PipelineBlock>jifmux</PipelineBlock>
+    <PipelineBlock location="iImageLocationSnap640x480" name="snapsaveFile640">multifilesink location=/tmp/video_snapshot_640x480_%%05d.jpeg name=snapsaveFile640 sync=false async=false enable-last-sample=false</PipelineBlock>
+</Pipeline>
+
+<Pipeline name="snapshot640x480" default="stop">
+    <PipelineBlock src="isnapshot640x480src">interpipesrc enable-sync=false format=time max-bytes=1 is-live=true name=isnapshot640x480src num-buffers=1 listen-to=ivideoclean</PipelineBlock>
+
+    <PipelineBlock>queue</PipelineBlock>
+    <PipelineBlock>imxipuvideotransform</PipelineBlock>
+    <PipelineBlock>imxvpuenc_mjpeg</PipelineBlock>
+    <PipelineBlock>jpegparse</PipelineBlock>
+    <PipelineBlock tag="imageTag" name="snapshot640x480tags">taginject name=snapshot640x480tags</PipelineBlock>
+    <PipelineBlock>jifmux</PipelineBlock>
+    <PipelineBlock location="iImageLocation640x480" name="saveFile640">multifilesink location=/tmp/snapshot_640x480_%%05d.jpeg name=saveFile640 sync=false async=false enable-last-sample=false</PipelineBlock>
+</Pipeline>
+
+<Pipeline name="playback" default="external">
+    <PipelineBlock>filesrc location=filename</PipelineBlock>
+    <PipelineBlock>tsdemux</PipelineBlock>
+    <PipelineBlock>queue</PipelineBlock>
+    <PipelineBlock>h264parse</PipelineBlock>
+    <PipelineBlock>imxvpudec</PipelineBlock>
+    <PipelineBlock>imxg2dvideotransform</PipelineBlock>
+    <PipelineBlock>video/x-raw, format=RGBA</PipelineBlock>
+    <PipelineBlock>imxipuvideosink qos=false sync=true async=false enable-last-sample=false</PipelineBlock>
+</Pipeline>
+
+<SourceList> <!-- Each source must have a connection defined using that source. With interpipes elements, sinks are routed to sources -->
+    <Source>idisplayvideosrc</Source>
+    <Source>ivideostreamsrc</Source>
+    <Source>iaudiorecordsrc</Source>
+    <Source>iaudiodefaultsrc</Source>
+    <Source>ivideorecordsrc</Source>
+    <Source>irawvideosrc</Source>
+    <Source>ivideosnapshot640x480src</Source>
+    <Source>isnapshot640x480src</Source>
+    <Source>ivideosrc1280x960display</Source>
+</SourceList>
+<SinkList>
+    <Sink>ivideoclean</Sink>
+    <Sink>ivideomixedrgbx</Sink>
+    <Sink>ivideosrc1280x960</Sink>
+    <Sink>ivideomixed</Sink>
+    <Sink>isnapshotpip640x480</Sink>
+    <Sink>ivideoencode</Sink>
+    <Sink>iaudiosrc</Sink>
+</SinkList>
+<LocationList>
+    <Location type="location" name="recordFile">iVideoLocation</Location>
+    <Location type="location" name="saveFile640">iImageLocation640x480</Location>
+    <Location type="location" name="snapsaveFile640">iImageLocationSnap640x480</Location>
+    <Location type="location" name="saveFile1280">iImageLocation1280x960</Location>
+    <Location type="device">audiosrc</Location>
+</LocationList>
+<ConnectionList>  <!-- Each connection has one source, but can have multiple sinks -->
+    <Connection name="display" pipeline="display" pip="true">
+        <Source>idisplayvideosrc</Source>
+        <Sink value="PIP=off">ivideoclean</Sink>
+        <Sink value="PIP=on">ivideomixed</Sink>
+    </Connection>
+    <Connection name="pip" pipeline="pip" pip="false">
+        <Source>ipipvideosrc</Source>
+        <Sink>ivideoclean</Sink>
+    </Connection>
+    <Connection name="encode" pipeline="encode" pip="true">
+        <Source>irawvideosrc</Source>
+        <Sink value="PIP=off">ivideoclean</Sink>
+        <Sink value="PIP=on">ivideomixed</Sink>
+    </Connection>
+    <Connection name="uvcvideo" pipeline="uvc640x480" pip="true">
+        <Source>iuvc640x480src</Source>
+        <Sink value="PIP=off">ivideoclean</Sink>
+        <Sink value="PIP=on">ivideomixed</Sink>
+    </Connection>
+    <Connection name="capture" pipeline="record" pip="false">
+        <Source>ivideorecordsrc</Source>
+        <Sink>ivideoencode</Sink>
+    </Connection>
+    <Connection name="audio" pipeline="record" pip="false">
+        <Source>iaudiorecordsrc</Source>
+        <Sink value="default">iaudiosrcdefault</Sink>
+        <Sink value="capture">iaudiosrc2</Sink>
+    </Connection>
+    <Connection name="stream" pipeline="stream" pip="false">
+        <Source>ivideostreamsrc</Source>
+        <Sink>ivideoencode</Sink>
+    </Connection>
+    <Connection name="videosnapshot640x480" pipeline="videosnapshot640x480" pip="true">
+        <Source>ivideosnapshot640x480src</Source>
+        <Sink value="PIP=off">ivideoclean</Sink>
+        <Sink value="PIP=on">ivideomixed</Sink>
+    </Connection>
+    <Connection name="snapshot640x480" pipeline="snapshot640x480" pip="true">
+        <Source>isnapshot640x480src</Source>
+        <Sink value="PIP=off">ivideoclean</Sink>
+        <Sink value="PIP=on">ivideomixed</Sink>
+    </Connection>
+</ConnectionList>
+</VideoPipeline>

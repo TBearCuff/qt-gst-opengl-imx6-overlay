@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Pipeline name="main">
+    <Element type="source" factory-name="imxv4l2videosrc" name="video-src">
+        <Setting variable="device" value="/dev/video0"/>
+        <Setting variable="queue-size" value="9" data-type="int"/>
+        <Setting variable="skip-set-size" value="2" data-type="int"/>
+        <Setting variable="skip-pattern" value="2" data-type="int"/>
+    </Element>
+    <Element type="filter" factory-name="imxipuvideotransform" name="video-transform">
+        <Setting variable="output-rotation" value="2" data-type="int"/>
+    </Element>
+    <Element type="sink" factory-name="imxg2dvideosink" name="video-sink">
+        <Setting variable="framebuffer" value="/dev/fb0"/>
+    </Element>
+</Pipeline>
+
+
