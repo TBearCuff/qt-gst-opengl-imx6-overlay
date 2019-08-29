@@ -20,6 +20,12 @@ bool GstElementComponent::VInit(QDomElement &data)
     {
         m_pElement = gst_element_factory_make(factoryName.toStdString().c_str(), name.toStdString().c_str());
 
+        if(!m_pElement)
+        {
+            qDebug() << "Failed to create element of type " << name;
+            return false;
+        }
+
         for(QDomNode n = data.firstChild(); !n.isNull(); n = n.nextSibling())
         {
             QDomElement e = n.toElement();
@@ -41,6 +47,15 @@ bool GstElementComponent::VInit(QDomElement &data)
                     g_object_set(G_OBJECT(m_pElement), variable.toStdString().c_str(), value.toInt(), NULL);
                 }
 
+            }
+            else if(e.tagName() == "Caps")
+            {
+                QString media = e.attribute("media");
+                qDebug() << "Defining pad capabilities for " << media;
+                GstCaps *caps = gst_caps_new_empty_simple(media.toStdString().c_str());
+
+
+                gst_caps_unref(caps);
             }
         }
     }

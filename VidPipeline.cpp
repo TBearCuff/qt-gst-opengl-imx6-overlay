@@ -3,7 +3,11 @@
 #include <QDebug>
 #include "GstElementComponent.h"
 
-VidPipeline::VidPipeline(VidPipelineId id) : m_id(id)
+VidPipeline::VidPipeline(VidPipelineId id) :
+    m_pipeline(0),
+    m_pSource(0),
+    m_pSink(QSharedPointer<GstElementComponent>()),
+    m_id(id)
 {
 
 }
@@ -23,19 +27,45 @@ bool VidPipeline::Init(QDomElement& data)
         return false;
     }
 
-    QString pipeName = data.attribute("name");
-    qDebug() << data.tagName() << ": Initializing Pipeline: " << m_id << ", " << pipeName;
-    const char* name = pipeName.toStdString().c_str();
+    QString m_strName = data.attribute("name");
+    qDebug() << data.tagName() << ": Initializing Pipeline: " << m_id << ", " << m_strName;
+    const char* name = m_strName.toStdString().c_str();
     m_pipeline = gst_pipeline_new(name);
     return true;
 }
 
-void VidPipeline::PostInit()
+bool VidPipeline::PostInit()
 {
-    QSharedPointer<GstElementComponent> pElementComponent = filter.staticCast<GstElementComponent>();
-    //After the components are added to the pipeline, they need to be linked
-    gst_element_link_many(source, pElementComponent->GetElement(), sink, NULL);
+    //if no source or sink elements then this pipeline will not function
+    if(m_pSource.isNull() || m_pSink.isNull())
+    {
+        qDebug() << "The pipeline needs source and sink elements to be valid.";
+        qDebug() << "Elements were not linked.";
+        return false;
+    }
 
+
+    //After the components are added to the pipeline, they need to be linked
+    if(m_pFilter.isEmpty())
+    {
+        //link m_pSource to m_pSink
+        gst_element_link(m_pSource->GetElement(), m_pSink->GetElement());
+    }
+    else
+    {
+        QSharedPointer<GstElementComponent> pPreviousElement = m_pSource;
+        FilterList::iterator it = m_pFilter.begin();
+        while (it != m_pFilter.end())
+        {
+            QSharedPointer<GstElementComponent> pNextElement = (*it);
+            gst_element_link(pPreviousElement->GetElement(), pNextElement->GetElement());
+            pPreviousElement = (*it);
+            ++it;
+        }
+        gst_element_link(pPreviousElement->GetElement(), m_pSink->GetElement());
+    }
+
+    return true;
 }
 
 bool VidPipeline::SetState(GstState state)
@@ -50,21 +80,27 @@ bool VidPipeline::SetState(GstState state)
     return true;
 }
 
-void VidPipeline::AddComponent(StrongPipelineComponentPtr pComponent)
+bool VidPipeline::AddComponent(StrongPipelineComponentPtr pComponent)
 {
     QSharedPointer<GstElementComponent> pElementComponent = pComponent.staticCast<GstElementComponent>();
-    gst_bin_add(GST_BIN(m_pipeline), pElementComponent->GetElement());
+    bool success = (bool)gst_bin_add(GST_BIN(m_pipeline), pElementComponent->GetElement());
+    if(!success)
+    {
+        qDebug() << "Failed to add component to bin";
+        return false;
+    }
     if(pElementComponent->GetType() == "source")
     {
-        source = pElementComponent->GetElement();
+        m_pSource = pElementComponent;
     }
     if(pElementComponent->GetType() == "sink")
     {
-        sink = pElementComponent->GetElement();
+        m_pSink = pElementComponent;
     }
     if(pElementComponent->GetType() == "filter")
     {
-        filter = pElementComponent;
+        m_pFilter.append(pElementComponent);
     }
 
+    return true;
 }

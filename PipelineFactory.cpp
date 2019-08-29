@@ -63,14 +63,22 @@ StrongPipelinePtr PipelineFactory::CreatePipeline(QString pipelineResource)
         else
         {
             //it's good so add component to pipeline and pipeline owner of component
-            pPipeline->AddComponent(pComponent);
-            pComponent->SetOwner(pPipeline);
+            if(pPipeline->AddComponent(pComponent))
+            {
+                pComponent->SetOwner(pPipeline);
+            }
         }
     }
 
-    pPipeline->PostInit();
+    if(pPipeline->PostInit())
+    {
+        return pPipeline;
+    }
+    else
+    {
+        return StrongPipelinePtr();
+    }
 
-    return pPipeline;
 }
 
 StrongPipelineComponentPtr PipelineFactory::VCreateComponent(QDomElement &data)

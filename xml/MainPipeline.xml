@@ -8,6 +8,18 @@
     </Element>
     <Element type="filter" factory-name="imxipuvideotransform" name="video-transform">
         <Setting variable="output-rotation" value="2" data-type="int"/>
+        <Caps media="video/x-raw">
+            <width>(int)640</width>
+            <height>(int)480</height>
+            <interlace-mode>(string)progressive</interlace-mode>
+            <framerate>(fraction)30/1</framerate>
+            <pixel-aspect-ratio>(fraction)1/1</pixel-aspect-ratio>
+            <format>(string)RGBx</format>
+        </Caps>
+    </Element>
+    <Element type="filter" factory-name="queue" name="">
+        <Setting variable="leaky" value="2" data-type="int"/>
+        <Setting variable="max-size-buffers" value="3" data-type="int"/>
     </Element>
     <Element type="sink" factory-name="imxg2dvideosink" name="video-sink">
         <Setting variable="framebuffer" value="/dev/fb0"/>

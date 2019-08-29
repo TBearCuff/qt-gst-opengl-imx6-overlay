@@ -36,7 +36,14 @@ int main(int argc, char *argv[])
 
     PipelineFactory *m_pPipelineFactory = new PipelineFactory;
     StrongPipelinePtr pPipeline = m_pPipelineFactory->CreatePipeline(QString("/run/media/mmcblk2p6/xml/MainPipeline.xml"));
-    pPipeline->SetState(GST_STATE_PLAYING);
+    if(pPipeline)
+    {
+        pPipeline->SetState(GST_STATE_PLAYING);
+    }
+    else
+    {
+        qDebug() << "Pipeline was not created!";
+    }
 
 
     // Set OpenGL Version information
